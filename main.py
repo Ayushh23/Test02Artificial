@@ -113,9 +113,9 @@ async def update_prompt2(data: PromptUpdate):
         cursor.execute("UPDATE prompts SET prompt_text = ? WHERE id = 2", (data.prompt_text,))
         conn.commit()
         conn.close()
-        return {"status": "Prompt 2 updated successfully"}
+       return {"status": True}  # return boolean True for success
     except Exception as e:
-        return {"error": str(e)}
+        return {"status": False, "error": str(e)}
 
 # =============== FRONTEND SERVING ================
 
