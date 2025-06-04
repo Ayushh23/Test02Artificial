@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 import google.generativeai as genai
 
 # ================== CONFIG ======================
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
 genai.configure(api_key="AIzaSyCcoQ40u_iM1BIvp26iLqVTWdHp3Ky0TAw")  # Replace with your real key
 
@@ -117,8 +118,11 @@ async def update_prompt2(data: PromptUpdate):
 # =============== FRONTEND SERVING ================
 
 app.mount("/", StaticFiles(directory="user-frontend", html=True), name="user")
-app.mount("/admin", StaticFiles(directory="admin-frontend", html=True), name="admin")
-
+app.mount(
+    "/admin",
+    StaticFiles(directory=os.path.join(current_dir, "admin-frontend"), html=True),
+    name="admin"
+)
 # ================ INIT ON START ==================
 
 initialize_db()
