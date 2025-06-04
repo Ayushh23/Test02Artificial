@@ -121,7 +121,7 @@ async def update_prompt2(data: PromptUpdate):
 
 app.mount("/", StaticFiles(directory="user-frontend", html=True), name="user")
 app.mount(
-    "/admin",
+    "/admin12345",
     StaticFiles(directory=os.path.join(current_dir, "admin-frontend"), html=True),
     name="admin"
 )
