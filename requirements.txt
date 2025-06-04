@@ -1,4 +1,4 @@
-
+sqlite3
 fastapi
 uvicorn
 python-multipart
