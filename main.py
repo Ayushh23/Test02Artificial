@@ -40,14 +40,13 @@ def initialize_db():
         cursor.executemany(
             "INSERT INTO prompts (prompt_text) VALUES (?)",
             [
-                ("Is the resume tailored to the target job description?"),
-                ("Are there any red flags like gaps or poor formatting?"),
-                ("What improvements can enhance clarity or impact?")
+                ("Is the resume tailored to the target job description?",),
+                ("Are there any red flags like gaps or poor formatting?",),
+                ("What improvements can enhance clarity or impact?",)
             ]
         )
         conn.commit()
     conn.close()
-
 def get_prompts_from_db():
     conn = sqlite3.connect("prompts.db")
     cursor = conn.cursor()
