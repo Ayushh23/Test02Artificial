@@ -2,6 +2,8 @@ import base64
 import io
 import fitz  # PyMuPDF
 import sqlite3
+import os
+from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
