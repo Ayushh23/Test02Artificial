@@ -111,8 +111,7 @@ class PromptBatchUpdate(BaseModel):
 
 @app.post("/update_prompt")
 async def update_prompt(data: PromptUpdate, request: Request):
-    if request.headers.get("Authorization") != f"Bearer {ADMIN_TOKEN}":
-        return {"status": False, "error": "Unauthorized"}
+    
     try:
         conn = sqlite3.connect('prompts.db')
         cursor = conn.cursor()
@@ -139,9 +138,6 @@ async def update_prompt(data: PromptUpdate, request: Request):
 #         return {"status": False, "error": str(e)}
 
 @app.get("/debug_prompts")
-async def get_prompts(request: Request):
-    if request.headers.get("Authorization") != f"Bearer {ADMIN_TOKEN}":
-        return {"status": False, "error": "Unauthorized"}
     try:
         return {"prompts": get_prompts_from_db()}
     except Exception as e:
