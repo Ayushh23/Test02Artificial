@@ -3,7 +3,7 @@ import io
 import fitz  # PyMuPDF
 import sqlite3
 import os
-from fastapi import FastAPI, Form
+from fastapi import FastAPI, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -11,8 +11,9 @@ import google.generativeai as genai
 
 # ================== CONFIG ======================
 current_dir = os.path.dirname(os.path.abspath(__file__))
+ADMIN_TOKEN = "drdoom"  # Change this to your secure token
 
-genai.configure(api_key="AIzaSyCcoQ40u_iM1BIvp26iLqVTWdHp3Ky0TAw")  # Replace with your real key
+genai.configure(api_key="AIzaSyCcoQ40u_iM1BIvp26iLqVTWdHp3Ky0TAw")
 
 app = FastAPI()
 
@@ -37,7 +38,7 @@ def initialize_db():
         )
     """)
     cursor.execute("SELECT COUNT(*) FROM prompts")
-    if cursor.fetchone()[0] == 0:  # Only insert if table is empty
+    if cursor.fetchone()[0] == 0:
         cursor.executemany(
             "INSERT INTO prompts (prompt_text) VALUES (?)",
             [
@@ -99,37 +100,57 @@ Provide a detailed report that includes:
 
     return {"response": response_text}
 
-# ============== ADMIN ROUTE ======================
+# ============== ADMIN ROUTES ======================
 
 class PromptUpdate(BaseModel):
     prompt_text: str
+    prompt_id: int
 
-@app.post("/update_prompt2")
-async def update_prompt2(data: PromptUpdate):
+class PromptBatchUpdate(BaseModel):
+    prompts: list[str]
+
+@app.post("/update_prompt")
+async def update_prompt(data: PromptUpdate, request: Request):
+    if request.headers.get("Authorization") != f"Bearer {ADMIN_TOKEN}":
+        return {"status": False, "error": "Unauthorized"}
     try:
         conn = sqlite3.connect('prompts.db')
         cursor = conn.cursor()
-        cursor.execute("UPDATE prompts SET prompt_text = ? WHERE id = 2", (data.prompt_text,))
+        cursor.execute("UPDATE prompts SET prompt_text = ? WHERE id = ?", (data.prompt_text, data.prompt_id))
         conn.commit()
         conn.close()
         return {"status": True}
     except Exception as e:
         return {"status": False, "error": str(e)}
 
-# ======== Optional Debug Route (Safe to remove) ========
+# @app.post("/update_all_prompts")
+# async def update_all_prompts(data: PromptBatchUpdate, request: Request):
+#     if request.headers.get("Authorization") != f"Bearer {ADMIN_TOKEN}":
+#         return {"status": False, "error": "Unauthorized"}
+#     try:
+#         conn = sqlite3.connect('prompts.db')
+#         cursor = conn.cursor()
+#         for idx, prompt in enumerate(data.prompts, start=1):
+#             cursor.execute("UPDATE prompts SET prompt_text = ? WHERE id = ?", (prompt, idx))
+#         conn.commit()
+#         conn.close()
+#         return {"status": True}
+#     except Exception as e:
+#         return {"status": False, "error": str(e)}
+
 @app.get("/debug_prompts")
-async def debug_prompts():
-    prompts = get_prompts_from_db()
-    return {"prompts": prompts}
+async def get_prompts(request: Request):
+    if request.headers.get("Authorization") != f"Bearer {ADMIN_TOKEN}":
+        return {"status": False, "error": "Unauthorized"}
+    try:
+        return {"prompts": get_prompts_from_db()}
+    except Exception as e:
+        return {"status": False, "error": str(e)}
 
 # =============== FRONTEND SERVING ================
 
 app.mount("/", StaticFiles(directory="user-frontend", html=True), name="user")
-app.mount(
-    "/admin12345",
-    StaticFiles(directory=os.path.join(current_dir, "admin-frontend"), html=True),
-    name="admin"
-)
+app.mount("/admin12345", StaticFiles(directory=os.path.join(current_dir, "admin-frontend"), html=True), name="admin")
 
 # ================ INIT ON START ==================
 
