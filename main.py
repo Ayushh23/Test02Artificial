@@ -3,11 +3,10 @@ import io
 import fitz  # PyMuPDF
 import sqlite3
 import os
-from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, Form
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 import google.generativeai as genai
 
 # ================== CONFIG ======================
@@ -38,8 +37,7 @@ def initialize_db():
         )
     """)
     cursor.execute("SELECT COUNT(*) FROM prompts")
-    if cursor.fetchone()[0] < 3:
-        cursor.execute("DELETE FROM prompts")
+    if cursor.fetchone()[0] == 0:  # Only insert if table is empty
         cursor.executemany(
             "INSERT INTO prompts (prompt_text) VALUES (?)",
             [
@@ -50,6 +48,7 @@ def initialize_db():
         )
         conn.commit()
     conn.close()
+
 def get_prompts_from_db():
     conn = sqlite3.connect("prompts.db")
     cursor = conn.cursor()
@@ -113,9 +112,15 @@ async def update_prompt2(data: PromptUpdate):
         cursor.execute("UPDATE prompts SET prompt_text = ? WHERE id = 2", (data.prompt_text,))
         conn.commit()
         conn.close()
-       return {"status": True}  # return boolean True for success
+        return {"status": True}
     except Exception as e:
         return {"status": False, "error": str(e)}
+
+# ======== Optional Debug Route (Safe to remove) ========
+@app.get("/debug_prompts")
+async def debug_prompts():
+    prompts = get_prompts_from_db()
+    return {"prompts": prompts}
 
 # =============== FRONTEND SERVING ================
 
@@ -125,6 +130,7 @@ app.mount(
     StaticFiles(directory=os.path.join(current_dir, "admin-frontend"), html=True),
     name="admin"
 )
+
 # ================ INIT ON START ==================
 
 initialize_db()
