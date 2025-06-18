@@ -20,7 +20,7 @@ app = FastAPI()
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*","http://127.0.0.1:5500"],
+    allow_origins=["*", "http://127.0.0.1:5500"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -106,12 +106,8 @@ class PromptUpdate(BaseModel):
     prompt_text: str
     prompt_id: int
 
-class PromptBatchUpdate(BaseModel):
-    prompts: list[str]
-
 @app.post("/update_prompt")
 async def update_prompt(data: PromptUpdate, request: Request):
-    
     try:
         conn = sqlite3.connect('prompts.db')
         cursor = conn.cursor()
@@ -122,22 +118,8 @@ async def update_prompt(data: PromptUpdate, request: Request):
     except Exception as e:
         return {"status": False, "error": str(e)}
 
-# @app.post("/update_all_prompts")
-# async def update_all_prompts(data: PromptBatchUpdate, request: Request):
-#     if request.headers.get("Authorization") != f"Bearer {ADMIN_TOKEN}":
-#         return {"status": False, "error": "Unauthorized"}
-#     try:
-#         conn = sqlite3.connect('prompts.db')
-#         cursor = conn.cursor()
-#         for idx, prompt in enumerate(data.prompts, start=1):
-#             cursor.execute("UPDATE prompts SET prompt_text = ? WHERE id = ?", (prompt, idx))
-#         conn.commit()
-#         conn.close()
-#         return {"status": True}
-#     except Exception as e:
-#         return {"status": False, "error": str(e)}
-
 @app.get("/debug_prompts")
+async def debug_prompts():
     try:
         return {"prompts": get_prompts_from_db()}
     except Exception as e:
