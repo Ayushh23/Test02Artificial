@@ -12,7 +12,7 @@ import google.generativeai as genai
 # ================== CONFIG ======================
 current_dir = os.path.dirname(os.path.abspath(__file__))
 ADMIN_TOKEN = "drdoom"  # Change this to your secure token
-
+DB_PATH = "/data/prompts.db"
 genai.configure(api_key="AIzaSyCcoQ40u_iM1BIvp26iLqVTWdHp3Ky0TAw")
 
 app = FastAPI()
@@ -29,8 +29,9 @@ app.add_middleware(
 # =============== DATABASE LOGIC =================
 
 def initialize_db():
-    if not os.path.exists("prompts.db"):
-        conn = sqlite3.connect("prompts.db")
+    if not os.path.exists(DB_PATH):
+        os.makedirs("/data", exist_ok=True)  # ensure /data exists
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS prompts (
@@ -48,9 +49,9 @@ def initialize_db():
         )
         conn.commit()
         conn.close()
-
+        
 def get_prompts_from_db():
-    conn = sqlite3.connect("prompts.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT prompt_text FROM prompts ORDER BY id ASC")
     prompts = [row[0] for row in cursor.fetchall()]
@@ -108,7 +109,7 @@ class PromptUpdate(BaseModel):
 @app.post("/update_prompt")
 async def update_prompt(data: PromptUpdate, request: Request):
     try:
-        conn = sqlite3.connect('prompts.db')
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("UPDATE prompts SET prompt_text = ? WHERE id = ?", (data.prompt_text, data.prompt_id))
         conn.commit()
