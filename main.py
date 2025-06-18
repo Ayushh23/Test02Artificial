@@ -29,16 +29,15 @@ app.add_middleware(
 # =============== DATABASE LOGIC =================
 
 def initialize_db():
-    conn = sqlite3.connect("prompts.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS prompts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            prompt_text TEXT
-        )
-    """)
-    cursor.execute("SELECT COUNT(*) FROM prompts")
-    if cursor.fetchone()[0] == 0:
+    if not os.path.exists("prompts.db"):
+        conn = sqlite3.connect("prompts.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS prompts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                prompt_text TEXT
+            )
+        """)
         cursor.executemany(
             "INSERT INTO prompts (prompt_text) VALUES (?)",
             [
@@ -48,7 +47,7 @@ def initialize_db():
             ]
         )
         conn.commit()
-    conn.close()
+        conn.close()
 
 def get_prompts_from_db():
     conn = sqlite3.connect("prompts.db")
